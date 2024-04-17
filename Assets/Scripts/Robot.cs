@@ -21,7 +21,6 @@ public class Robot : MonoBehaviour
     {
         _robotAnimation = GetComponent<RobotAnimation>();
         _robotMover = GetComponent<RobotMover>();
-        _base = GetComponentInParent<Base>();
 
         IsIdle = true;
     }
@@ -49,6 +48,11 @@ public class Robot : MonoBehaviour
             else if (_target == _base.gameObject)
                 _robotMover.Walk(transform.forward);
         }
+    }
+
+    public void SetBase(Base gameBase)
+    {
+        _base = gameBase;
     }
 
     public void SetResource(GameObject resource)
@@ -82,6 +86,7 @@ public class Robot : MonoBehaviour
     private void PutResource()
     {
         _resourse.GetComponent<Resource>().Destroy();
+        _base.CollectResource();
         _resourse = null;
         _target = null;
         IsIdle = true;

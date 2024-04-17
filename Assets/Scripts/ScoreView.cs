@@ -1,12 +1,18 @@
 using TMPro;
 using UnityEngine;
 
+[RequireComponent(typeof(ScoreCounter))]
+
 public class ScoreView : MonoBehaviour
 {
-    [SerializeField] private ScoreCounter _scoreCounter;
     [SerializeField] private TMP_Text _score;
 
-    private int _maxScore;
+    private ScoreCounter _scoreCounter;
+
+    private void Awake()
+    {
+        _scoreCounter = GetComponent<ScoreCounter>();
+    }
 
     private void LateUpdate()
     {
@@ -26,12 +32,7 @@ public class ScoreView : MonoBehaviour
 
     private void OnScoreChanged(int score)
     {
-        _score.text = $"{score} / {_maxScore}".ToString();
-    }
-
-    internal void SetMaxScore(int value)
-    {
-        _maxScore = value;
+        _score.text = score.ToString();
     }
 }
 

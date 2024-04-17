@@ -1,36 +1,32 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class ResourceSpawner : MonoBehaviour
+public class ResourceSpawner : Spawner
 {
-    [SerializeField] private Base _base;
     [SerializeField] private ObjectPool _pool;
-    [SerializeField] private ScoreCounter _counter;
-    [SerializeField] private ScoreView _view;
-    //[SerializeField] private float _spawnDelay = 5;
+    [SerializeField] private float _spawnDelay = 5;
     [SerializeField] private float _spawnRadius = 45;
-    [SerializeField] private int _spawnAmount = 15;
+    [SerializeField] private int _startSpawnAmount = 15;
 
     private void Start()
     {
-        //StartCoroutine(SpawnContinuously(_spawnDelay));
+        StartCoroutine(SpawnContinuously(_spawnDelay));
 
-        _view.SetMaxScore(_spawnAmount);
-        _counter.Reset();
-
-        for (int i = 0; i < _spawnAmount; i++)
+        for (int i = 0; i < _startSpawnAmount; i++)
         {
             SpawnResource();
         }
     }
 
-    //private IEnumerator SpawnContinuously(float delay)
-    //{
-    //    while (true)
-    //    {
-    //        yield return new WaitForSeconds(delay);
-    //        SpawnResource();
-    //    }
-    //}
+    private IEnumerator SpawnContinuously(float delay)
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(delay);
+            SpawnResource();
+        }
+    }
 
     private void SpawnResource()
     {
@@ -43,14 +39,26 @@ public class ResourceSpawner : MonoBehaviour
 
         poolObject.GetComponent<Resource>().Destroyed += OnDestroyed;
 
-        _base.AddResource(poolObject);
+        Resources.Enqueue(poolObject);
     }
 
     private void OnDestroyed(GameObject poolObject)
     {
-        _counter.Add();
         poolObject.transform.parent = _pool.transform;
         _pool.PutObject(poolObject);
         poolObject.GetComponent<Resource>().Destroyed -= OnDestroyed;
+    }
+
+    public bool TryGetResource(out GameObject resourñe)
+    {
+        resourñe = null;
+
+        if (Resources.Count > 0)
+        {
+            resourñe = Resources.Dequeue();
+            return true;
+        }
+
+        return false;
     }
 }
