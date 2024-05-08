@@ -10,7 +10,7 @@ public class Robot : MonoBehaviour
     [SerializeField] private float _putDistance = 4;
 
     private Base _base;
-    private GameObject _resourse;
+    private Resource _resourse;
     private GameObject _target;
     private RobotAnimation _robotAnimation;
     private RobotMover _robotMover;
@@ -29,7 +29,7 @@ public class Robot : MonoBehaviour
     {
         if (_resourse != null)
         {
-            if (_target == _resourse && Vector3.Distance(transform.position, _resourse.transform.position) <= _takeDistance)
+            if (_target == _resourse.gameObject && Vector3.Distance(transform.position, _resourse.transform.position) <= _takeDistance)
                 TakeResource();
 
             if (_target == _base.gameObject && Vector3.Distance(transform.position, _base.transform.position) <= _putDistance)
@@ -43,11 +43,16 @@ public class Robot : MonoBehaviour
         {
             transform.LookAt(_target.transform);
 
-            if (_target == _resourse)
+            if (_target == _resourse.gameObject)
                 _robotMover.Roll(transform.forward);
             else if (_target == _base.gameObject)
                 _robotMover.Walk(transform.forward);
         }
+    }
+
+    public void SetFlag(Flag flag)
+    {
+
     }
 
     public void SetBase(Base gameBase)
@@ -55,7 +60,7 @@ public class Robot : MonoBehaviour
         _base = gameBase;
     }
 
-    public void SetResource(GameObject resource)
+    public void SetResource(Resource resource)
     {
         _resourse = resource;
         IsIdle = false;
@@ -66,7 +71,7 @@ public class Robot : MonoBehaviour
     {
         _robotAnimation.SetRoll();
         yield return new WaitForSeconds(2);
-        _target = _resourse;
+        _target = _resourse.gameObject;
     }
 
     private IEnumerator WalkActivate()
@@ -85,7 +90,7 @@ public class Robot : MonoBehaviour
 
     private void PutResource()
     {
-        _resourse.GetComponent<Resource>().Destroy();
+        _resourse.Destroy();
         _base.CollectResource();
         _resourse = null;
         _target = null;

@@ -6,8 +6,6 @@ public class InputManager : MonoBehaviour
     [SerializeField] private LayerMask _layer;
     [SerializeField] private float _maxDistance = 1000;
 
-    [SerializeField] private BaseSpawner _baseSpawner;
-
     private Vector3 _lastPosition;
 
     public Vector3 GetSelectMapPosition()

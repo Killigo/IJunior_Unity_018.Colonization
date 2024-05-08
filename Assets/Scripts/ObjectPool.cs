@@ -1,45 +1,48 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ObjectPool : MonoBehaviour
+public class ObjectPool<T> where T : MonoBehaviour
 {
-    [SerializeField] private GameObject[] _prefabs;
+    private T[] _prefabs;
+    private Transform _container;
+    private Queue<T> _pool;
 
-    protected Queue<GameObject> Pool;
+    public IEnumerable<T> PooledObject => _pool;
 
-    public IEnumerable<GameObject> PooledObject => Pool;
-
-    private void Awake()
+    public ObjectPool(T[] prefabs, Transform container)
     {
-        Pool = new Queue<GameObject>();
+        _prefabs = prefabs;
+        _container = container;
+
+        _pool = new Queue<T>();
     }
 
-    public GameObject GetObject()
+    public T GetObject()
     {
         int index = Random.Range(0, _prefabs.Length - 1);
 
-        if (Pool.Count == 0)
+        if (_pool.Count == 0)
         {
-            GameObject poolObject = Instantiate(_prefabs[index]);
-            poolObject.transform.parent = transform;
+            T poolObject = Object.Instantiate(_prefabs[index]);
+            poolObject.transform.parent = _container;
 
             return poolObject;
         }
 
-        GameObject returnObject = Pool.Dequeue();
-        returnObject.SetActive(true);
+        T returnObject = _pool.Dequeue();
+        returnObject.gameObject.SetActive(true);
 
         return returnObject;
     }
 
-    public void PutObject(GameObject poolObject)
+    public void PutObject(T poolObject)
     {
-        Pool.Enqueue(poolObject);
-        poolObject.SetActive(false);
+        _pool.Enqueue(poolObject);
+        poolObject.gameObject.SetActive(false);
     }
 
     public void Reset()
     {
-        Pool.Clear();
+        _pool.Clear();
     }
 }

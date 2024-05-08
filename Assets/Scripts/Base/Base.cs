@@ -5,15 +5,16 @@ using Random = UnityEngine.Random;
 
 public class Base : MonoBehaviour
 {
+    [SerializeField] private Robot[] _prefabs;
     [SerializeField] private float _spawnRadius = 5;
     [SerializeField] private int _robotPrice = 3;
     [SerializeField] private int _baseBuildPrice = 5;
-    [SerializeField] private GameObject _flag;
+    [SerializeField] private Flag _flag;
 
     private bool _flagIsStand = false;
     private ResourceSpawner _resourceSpawner;
     private ScoreCounter _counter;
-    private ObjectPool _robotPool;
+    private ObjectPool<Robot> _robotPool;
     private List<Robot> _robots = new List<Robot>();
     private Robot _selectedRobot = null;
 
@@ -21,7 +22,7 @@ public class Base : MonoBehaviour
 
     private void Awake()
     {
-        _robotPool = GetComponent<ObjectPool>();
+        _robotPool = new ObjectPool<Robot>(_prefabs, transform);
     }
 
     private void Start()
@@ -42,7 +43,7 @@ public class Base : MonoBehaviour
                     return;
                 }
 
-                if (_resourceSpawner.TryGetResource(out GameObject resource))
+                if (_resourceSpawner.TryGetResource(out Resource resource))
                 {
                     robot.SetResource(resource);
                 }
@@ -54,7 +55,7 @@ public class Base : MonoBehaviour
             if (_selectedRobot != null)
             {
                 _flagIsStand = false;
-                _flag.SetActive(false);
+                _flag.gameObject.SetActive(false);
                 _counter.Spend(_baseBuildPrice);
                 BaseBuilded?.Invoke(_flag.transform.position, _selectedRobot);
                 _selectedRobot = null;
@@ -73,18 +74,15 @@ public class Base : MonoBehaviour
         var positionZ = Random.Range(transform.position.z - _spawnRadius, transform.position.z + _spawnRadius);
         var position = new Vector3(positionX, transform.position.y, positionZ);
 
-        GameObject poolObject = _robotPool.GetObject();
-        poolObject.transform.position = position;
-
-        Robot robot = poolObject.GetComponent<Robot>();
-        robot.SetBase(gameObject.GetComponent<Base>());
-        _robots.Add(robot);
+        Robot robot = _robotPool.GetObject();
+        robot.transform.position = position;
+        AddRobot(robot);
     }
 
     public void AddRobot(Robot robot)
     {
-        robot.gameObject.transform.parent = gameObject.transform;
-        robot.SetBase(gameObject.GetComponent<Base>());
+        robot.transform.parent = transform;
+        robot.SetBase(this);
         _robots.Add(robot);
     }
 
@@ -101,7 +99,7 @@ public class Base : MonoBehaviour
     public void SetFlag(Vector3 position)
     {
         _flagIsStand = true;
-        _flag.SetActive(true);
+        _flag.gameObject.SetActive(true);
         _flag.transform.position = position;
     }
 }

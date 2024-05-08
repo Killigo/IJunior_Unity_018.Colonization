@@ -14,15 +14,15 @@ public class ScoreView : MonoBehaviour
         _scoreCounter = GetComponent<ScoreCounter>();
     }
 
+    private void OnEnable()
+    {
+        _scoreCounter.ScoreChanged += OnScoreChanged;
+    }
+
     private void LateUpdate()
     {
         transform.LookAt(Camera.main.transform);
         transform.Rotate(0, 180, 0);
-    }
-
-    private void OnEnable()
-    {
-        _scoreCounter.ScoreChanged += OnScoreChanged;
     }
 
     private void OnDisable()

@@ -2,12 +2,21 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ResourceSpawner : Spawner
+public class ResourceSpawner : MonoBehaviour
 {
-    [SerializeField] private ObjectPool _pool;
+    [SerializeField] private Resource[] _prefabs;
     [SerializeField] private float _spawnDelay = 5;
     [SerializeField] private float _spawnRadius = 45;
     [SerializeField] private int _startSpawnAmount = 15;
+
+    private ObjectPool<Resource> _pool;
+
+    private Queue<Resource> Resources = new Queue<Resource>();
+
+    private void Awake()
+    {
+        _pool = new ObjectPool<Resource>(_prefabs, transform);
+    }
 
     private void Start()
     {
@@ -34,22 +43,22 @@ public class ResourceSpawner : Spawner
         var positionZ = Random.Range(transform.position.z - _spawnRadius, transform.position.z + _spawnRadius);
         var position = new Vector3(positionX, transform.position.y, positionZ);
 
-        GameObject poolObject = _pool.GetObject();
+        Resource poolObject = _pool.GetObject();
         poolObject.transform.position = position;
 
-        poolObject.GetComponent<Resource>().Destroyed += OnDestroyed;
+        poolObject.Destroyed += OnDestroyed;
 
         Resources.Enqueue(poolObject);
     }
 
-    private void OnDestroyed(GameObject poolObject)
+    private void OnDestroyed(Resource resource)
     {
-        poolObject.transform.parent = _pool.transform;
-        _pool.PutObject(poolObject);
-        poolObject.GetComponent<Resource>().Destroyed -= OnDestroyed;
+        resource.transform.parent = transform;
+        _pool.PutObject(resource);
+        resource.Destroyed -= OnDestroyed;
     }
 
-    public bool TryGetResource(out GameObject resourñe)
+    public bool TryGetResource(out Resource resourñe)
     {
         resourñe = null;
 
