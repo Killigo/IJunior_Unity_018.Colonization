@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 
@@ -6,16 +7,18 @@ using UnityEngine;
 
 public class Robot : MonoBehaviour
 {
-    [SerializeField] private float _takeDistance = 4;
-    [SerializeField] private float _putDistance = 4;
+    [SerializeField] private float _interactionDistance = 4;
 
     private Base _base;
     private Resource _resourse;
+    private Flag _flag;
     private GameObject _target;
     private RobotAnimation _robotAnimation;
     private RobotMover _robotMover;
 
     public bool IsIdle { get; private set; }
+
+    public event Action<Robot> BaseBuilded;
 
     private void Start()
     {
@@ -29,11 +32,21 @@ public class Robot : MonoBehaviour
     {
         if (_resourse != null)
         {
-            if (_target == _resourse.gameObject && Vector3.Distance(transform.position, _resourse.transform.position) <= _takeDistance)
+            if (_target == _resourse.gameObject && Vector3.Distance(transform.position, _resourse.transform.position) <= _interactionDistance)
                 TakeResource();
 
-            if (_target == _base.gameObject && Vector3.Distance(transform.position, _base.transform.position) <= _putDistance)
+            if (_target == _base.gameObject && Vector3.Distance(transform.position, _base.transform.position) <= _interactionDistance)
                 PutResource();
+        }
+        else
+        {
+            if (_flag != null && _target == _flag.gameObject && Vector3.Distance(transform.position, _flag.transform.position) <= _interactionDistance)
+            {
+                _target = null;
+                _flag = null;
+                IsIdle = true;
+                BaseBuilded?.Invoke(this);
+            }
         }
     }
 
@@ -43,16 +56,21 @@ public class Robot : MonoBehaviour
         {
             transform.LookAt(_target.transform);
 
-            if (_target == _resourse.gameObject)
+            if (_target == _resourse?.gameObject)
                 _robotMover.Roll(transform.forward);
-            else if (_target == _base.gameObject)
+            else if (_target == _base?.gameObject)
+                _robotMover.Walk(transform.forward);
+            else if (_target == _flag?.gameObject)
                 _robotMover.Walk(transform.forward);
         }
     }
 
-    public void SetFlag(Flag flag)
+    public void BuildNewBase(Flag flag)
     {
-
+        IsIdle = false;
+        _flag = flag;
+        _target = flag.gameObject;
+        _robotAnimation.SetWalk();
     }
 
     public void SetBase(Base gameBase)
@@ -64,28 +82,14 @@ public class Robot : MonoBehaviour
     {
         _resourse = resource;
         IsIdle = false;
-        StartCoroutine(RollActivate());
-    }
-
-    private IEnumerator RollActivate()
-    {
-        _robotAnimation.SetRoll();
-        yield return new WaitForSeconds(2);
-        _target = _resourse.gameObject;
-    }
-
-    private IEnumerator WalkActivate()
-    {
-        _robotAnimation.SetWalk();
-        yield return new WaitForSeconds(2);
-        _resourse.transform.parent = transform;
-        _target = _base.gameObject;
+        StartCoroutine(RollAnimationActivate(_resourse.gameObject));
     }
 
     private void TakeResource()
     {
         _target = null;
-        StartCoroutine(WalkActivate());
+        _resourse.transform.parent = transform;
+        StartCoroutine(WalkAnimationActivate(_base.gameObject));
     }
 
     private void PutResource()
@@ -96,5 +100,19 @@ public class Robot : MonoBehaviour
         _target = null;
         IsIdle = true;
         _robotAnimation.SetIdle();
+    }
+
+    private IEnumerator RollAnimationActivate(GameObject target)
+    {
+        _robotAnimation.SetRoll();
+        yield return new WaitForSeconds(2);
+        _target = target;
+    }
+
+    private IEnumerator WalkAnimationActivate(GameObject target)
+    {
+        _robotAnimation.SetWalk();
+        yield return new WaitForSeconds(2);
+        _target = target;
     }
 }

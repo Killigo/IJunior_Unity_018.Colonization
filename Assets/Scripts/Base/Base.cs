@@ -16,7 +16,6 @@ public class Base : MonoBehaviour
     private ScoreCounter _counter;
     private ObjectPool<Robot> _robotPool;
     private List<Robot> _robots = new List<Robot>();
-    private Robot _selectedRobot = null;
 
     public event Action<Vector3, Robot> BaseBuilded;
 
@@ -37,9 +36,16 @@ public class Base : MonoBehaviour
         {
             if (robot.IsIdle)
             {
-                if (_flagIsStand == true && _selectedRobot == null)
+                if (_counter.Score >= _baseBuildPrice && _flagIsStand == true)
                 {
-                    _selectedRobot = robot;
+                    robot.BuildNewBase(_flag);
+                    _counter.Spend(_baseBuildPrice);
+                    return;
+                }
+                else if (_counter.Score >= _robotPrice && _flagIsStand == false)
+                {
+                    _counter.Spend(_robotPrice);
+                    CreateRobot();
                     return;
                 }
 
@@ -48,23 +54,6 @@ public class Base : MonoBehaviour
                     robot.SetResource(resource);
                 }
             }
-        }
-
-        if (_counter.Score >= _baseBuildPrice && _flagIsStand == true && _selectedRobot != null)
-        {
-            if (_selectedRobot != null)
-            {
-                _flagIsStand = false;
-                _flag.gameObject.SetActive(false);
-                _counter.Spend(_baseBuildPrice);
-                BaseBuilded?.Invoke(_flag.transform.position, _selectedRobot);
-                _selectedRobot = null;
-            }
-        }
-        else if (_counter.Score >= _robotPrice && _flagIsStand == false)
-        {
-            _counter.Spend(_robotPrice);
-            CreateRobot();
         }
     }
 
@@ -77,6 +66,7 @@ public class Base : MonoBehaviour
         Robot robot = _robotPool.GetObject();
         robot.transform.position = position;
         AddRobot(robot);
+        robot.BaseBuilded += AddNewBaseRobot;
     }
 
     public void AddRobot(Robot robot)
@@ -101,5 +91,13 @@ public class Base : MonoBehaviour
         _flagIsStand = true;
         _flag.gameObject.SetActive(true);
         _flag.transform.position = position;
+    }
+
+    private void AddNewBaseRobot(Robot robot)
+    {
+        BaseBuilded?.Invoke(_flag.transform.position, robot);
+        _flagIsStand = false;
+        _flag.gameObject.SetActive(false);
+        robot.BaseBuilded -= AddNewBaseRobot;
     }
 }
